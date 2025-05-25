@@ -58,7 +58,7 @@
         region: "{{region}}"
         az: "{{zone1}}"
         state: "{{state}}"
-        cidr: "{{PubSub1Cidr}}"
+        cidr: "{{PrivSub1Cidr}}"
         resource_tags:
           Name: vprofile-PrivSub1
       register: privsub1_out
@@ -69,7 +69,7 @@
         region: "{{region}}"
         az: "{{zone2}}"
         state: "{{state}}"
-        cidr: "{{PubSub2Cidr}}"
+        cidr: "{{PrivSub2Cidr}}"
         resource_tags:
           Name: vprofile-PrivSub2
       register: privsub2_out
@@ -80,7 +80,7 @@
         region: "{{region}}"
         az: "{{zone3}}"
         state: "{{state}}"
-        cidr: "{{PubSub3Cidr}}"
+        cidr: "{{PrivSub3Cidr}}"
         resource_tags:
           Name: vprofile-PrivSub3
       register: privsub3_out
