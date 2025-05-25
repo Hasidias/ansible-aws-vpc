@@ -84,6 +84,7 @@
         resource_tags:
           Name: vprofile-PrivSub3
       register: privsub3_out
+
     - name: Internet gateway vpc_setup
       ec2_vpc_igw:
         vpc_id: "{{vpcout.vpc.id}}"
@@ -105,5 +106,6 @@
           - "{{pubsub3_out.subnet.id}}"
       routes:
         - dest: 0.0.0.0/0
-          gateway_id: "{{igw-out.gateway.id}}"
+          gateway_id: "{{igw-out.gateway_id}}"
       register: pubRT_out
+      
