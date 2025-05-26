@@ -34,7 +34,7 @@
             from_port: 80
             to_port: 80
             cidr_ip: 0.0.0.0/0
-        register: vproELBSG_out
+      register: vproELBSG_out
     
     - name: create security froup for Vprofile stack
       ec2_group:
@@ -44,9 +44,14 @@
         vpc_id: "{{vpcid}}"
         rules: 
           - proto: tcp
+            from_port: 80
+            to_port: 80
+            group_id: "{{vproELBSG_out.group_id}}"
+
+          - proto: tcp
             from_port: 22
             to_port: 22
-            cidr_ip: 0.0.0.0/0
+            group_id: "{{BastionSGid}}"
       register: BastionSG_out
 
     - name: Creating Bastion Host
