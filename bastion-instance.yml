@@ -44,10 +44,6 @@
         image_id: ami-0953476d60561c955
         wait: yes
         wait_timeout: 300
-        instace_tags: 
-          Name: "Bastion_host"
-          Project: Vprofile
-          Owner: Devops Team
         exact_count: 1
         tags:
           Name: "Bastion_host"
