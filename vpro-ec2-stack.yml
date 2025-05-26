@@ -23,3 +23,55 @@
         mode: 0600
       when: vprokey_out.changed
     
+    - name: create security group for load balancer
+      ec2_group:
+        name: vproELB-sg
+        description: Allow port 80 from everywhere and all port within sg
+        region: "{{region}}"
+        vpc_id: "{{vpc_id}}"
+        rule:
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+        register: vproELBSG_out
+    
+    - name: create security froup for Vprofile stack
+      ec2_group:
+        name: vproStack-sg
+        description: Allow post 22 from everywhere and all port within sg
+        region: "{{region}}"
+        vpc_id: "{{vpcid}}"
+        rules: 
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+      register: BastionSG_out
+
+    - name: Creating Bastion Host
+      amazon.aws.ec2_instance:
+        name: vprofile-ansible-ec2
+        key_name: vprofile-key
+        region: "{{region}}"
+        instance_type: t3.micro
+        image_id: "{{bastion_ami}}"
+        wait: yes
+        wait_timeout: 300
+        exact_count: 1
+        tags:
+          Name: "Bastion_host"
+          Project: Vprofile
+          Owner: Devops Team
+        security_group: "{{BastionSG_out.group_id}}"
+        vpc_subnet_id: "{{pubsub1id}}"
+      register: bastionHost_out
+
+    - name: insert/update "BastionSGid" in varss/vpc-output_vars
+      blockinfile:
+        path: vars/vpc-output_vars
+        backup: yes
+        block: |
+          BastionSGid: {{BastionSg_out.group_id}}
+      
+    
