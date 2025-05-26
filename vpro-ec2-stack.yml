@@ -51,7 +51,19 @@
             from_port: 22
             to_port: 22
             cidr_ip: 0.0.0.0/0
-      register: BastionSG_out
+      register: vproStack-sg
+
+    - name: create security froup for Vprofile stack
+      ec2_group:
+        name: vproStack-sg
+        description: Allow post 22 from everywhere and all port within sg
+        region: "{{region}}"
+        vpc_id: "{{vpcid}}"
+        purge_rules: no
+        rules: 
+          - proto: all
+            group_id: "{{vproELBSG_out.group_id}}"
+    
 
     - name: Creating Bastion Host
       amazon.aws.ec2_instance:
@@ -67,7 +79,7 @@
           Name: "Bastion_host"
           Project: Vprofile
           Owner: Devops Team
-        security_group: "{{BastionSG_out.group_id}}"
+        security_group: "{{vproStack-sg.group_id}}"
         vpc_subnet_id: "{{pubsub1id}}"
       register: bastionHost_out
 
@@ -76,6 +88,6 @@
         path: vars/vpc-output_vars
         backup: yes
         block: |
-          BastionSGid: {{BastionSG_out.group_id}}
+          BastionSGid: {{vproStack-sg.group_id}}
       
     
