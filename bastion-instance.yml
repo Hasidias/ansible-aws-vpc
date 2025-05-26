@@ -41,7 +41,7 @@
         key_name: vprofile-key
         region: "{{region}}"
         instance_type: t3.micro
-        image_id: ami-0953476d60561c955
+        image_id: ami-06c8f2ec674c67112
         wait: yes
         wait_timeout: 300
         exact_count: 1
