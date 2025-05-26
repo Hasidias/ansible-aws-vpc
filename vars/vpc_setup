@@ -24,5 +24,4 @@ state: present
 # bastion variables
 
 bastion_ami: ami-06c8f2ec674c67112
-region: us-east-2
 MYIP: 112.134.156.240
