@@ -51,7 +51,7 @@
           - proto: tcp
             from_port: 22
             to_port: 22
-            group_id: "{{BastionSGid}}"
+            cidr_ip: 0.0.0.0/0
       register: BastionSG_out
 
     - name: Creating Bastion Host
