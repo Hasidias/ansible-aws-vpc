@@ -181,7 +181,7 @@
       register: db01_out
       
     - debug:
-        var: db01_out.instances[0]
+        var: db01_out.instances[0].network_interfaces[0].private_ip_address
 
     - local_action:
         module: ec2_elb_lb
@@ -204,11 +204,11 @@
       blockinfile:
         path: provision-stack/group_vars/hostsip
         block: |
-          web01_ip: 1
-          app01_ip: 2
-          rmq01_ip: 3
-          mc01_ip: 4
-          db01_ip: 5
+          web01_ip: "{{web01_out.instances[0].network_interfaces[0].private_ip_address}}"
+          app01_ip: "{{app01_out.instances[0].network_interfaces[0].private_ip_address}}"
+          rmq01_ip: "{{app01_out.instances[0].network_interfaces[0].private_ip_address}}"
+          mc01_ip: "{{rmq01_out.instances[0].network_interfaces[0].private_ip_address}}"
+          db01_ip: "{{db01_out.instances[0].network_interfaces[0].private_ip_address}}"
     - name: copy login key to provision_stack directory
       copy:
         src: loginkey_vpro.pem
