@@ -218,7 +218,7 @@
 
     - name: Insert/Update Hosts IP & Name in file provision-stack/group_vars/hostsip
       blockinfile:
-        path: provision-stack/group_vars/hostsip
+        path: provision-stack/inventory-vpro
         block: |
           web01_ip ansible_host: "{{web01_out.instances[0].network_interfaces[0].private_ip_address}}"
           app01_ip ansible-host: "{{app01_out.instances[0].network_interfaces[0].private_ip_address}}"
