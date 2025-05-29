@@ -236,6 +236,9 @@
           [rmqsrvgrp]
           rmq01
 
+          [mcsrvgrp]
+          mc01
+
           [dbsrvgrp]
           db01
 
