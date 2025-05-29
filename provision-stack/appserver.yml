@@ -1,0 +1,173 @@
+---
+- name: setup Tomcat11 & Deploy artifact
+  hosts: appsrvgrp
+  # gather_facts: no
+
+  vars:
+    timestamp: "{{ansible_date_time.date}}_{{ansible_date_time.hour}}_{{ansible_date_time.minute}}"
+    tom_url: https://dlcdn.apache.org/tomcat/tomcat-11/v11.0.7/bin/apache-tomcat-11.0.7.tar.gz
+
+  tasks:
+    - name: Install JDK on Ubnutu 
+      apt:
+        name: openjdk-21-jre
+        state: present
+        update_cache: yes
+    
+    - name: Download Tomcat Tar Ball/Binaries
+      get_url:
+        url: "{{tom_url}}"
+        dest: /tmp/tomcat-11.tar.gz
+
+    - name: Add tomcat group
+      group:
+        name: tomcat
+        state: present
+      
+    - name: Add tomcat user
+      user:
+        name: tomcat
+        group: tomcat
+        shell: /bin/nologin
+        home: /usr/local/tomcat11
+    
+    - file:
+        path: /tmp/tomcat11
+        state: directory
+
+    - name: Extract tomcat
+      unarchive:
+        src: /tmp/tomcat-11.tar.gz
+        dest: /tmp/tomcat11/
+        remote_src: yes
+        list_files: yes
+      register: unarchive_info
+
+    - debug:
+        msg: "{{unarchive_info.files[0].split('/')[0]}}"
+    
+    - name: synchronize /tmp/tomcat11/tomcat_count /usr/local/tomcat11.
+      synchronize:
+        src: "/tmp/tomcat11/{{unarchive_info.files[0].split('/')[0]}}/"
+        dest: /usr/local/tomcat11/
+      delegate_to: "{{inventory_hostname}}"
+
+    - name: Change ownership of /usr/local/tomcat11
+      file:
+        path: /usr/local/tomcat11
+        owner: tomcat
+        group: tomcat
+        recurse: yes
+
+    - name: setup tomcat SVC file on ubuntu 16 and 18
+      template:
+        src: templates/tomcat11-ubuntu-svcfile.j2
+        dest: /etc/systemd/system/tomcat11.service
+        mode: "a+x"
+
+    - name: just force systemd to reread configs (2.4 and above)
+      systemd:
+        daemon_reload: yes
+    
+    - name: Start & Enable tomcat SVC
+      service:
+        name: tomcat11
+        state: started
+        enabled: yes
+      tags:
+        - svc
+    
+    - stat:
+        path: /usr/local/tomcat11/webapps/ROOT
+      register: artifact_stat
+      tags:
+        - deploy
+
+    - name: Stop tomcat11 svc
+      service:
+        name: tomcat11
+        state: stopped
+      tags:
+        - deploy
+      
+    - name: Try Backup and Deploy
+      block:
+        - name: Archive ROOT dir with timestamp
+          archive:
+            path: /usr/local/tomcat11/webapps/ROOT
+            dest: "/opt/ROOT_{{timestamp}}.tgz"
+          when: artifact_stat.stat.exists
+          register: archive_info
+          tags:
+            - deploy
+    
+        - name: copy ROOT dir with old_ROOT name
+          shell: cp -r ROOT old_ROOT
+          args: 
+            chdir: /usr/local/tomcat11/webapps/
+        - name: Delete current artifact
+          file:
+            path: "{{item}}"
+            state: absent
+          when: archive_info.changed
+          loop:
+            - /usr/local/tomcat11/webapps/ROOT
+            - /usr/local/tomcat11/webapps/ROOT.war
+          tags:
+            - deploy
+
+        - name: Try deploy artifact else restore from previos old_ROOT
+          block:
+            - name: Deploy vprofile artifact
+              copy:
+                src: files/ROOT.war
+                dest: /usr/local/tomcat11/webapps/ROOT.war
+              register: deploy_info
+              tags:
+                - deploy
+          rescue:
+            - shell: cp -r old_ROOT ROOT
+              args:
+                chdir: /usr/local/tomcat11/webapps/
+
+      rescue:
+        - name: Start tomcat11 svc
+          service:
+            name: tomcat11
+            state: started
+
+    - name: Start tomcat11 svc
+      service:
+        name: tomcat11
+        state: started
+      when: deploy_info.changed
+      tags:
+        - deploy
+
+    - name: Wait until ROOT.war is extracted to ROOT directory
+      wait_for:
+        path: /usr/local/tomcat11/webapps/ROOT
+      tags:
+        - deploy
+
+    - name: Deploy web configuration file
+      template:
+        src: templates/application.j2
+        dest: /usr/local/tomcat11/webapps/ROOT/WEB-INF/classes/application.properties
+        force: yes
+      notify:
+        - Restart Tomcat
+      tags:
+        - deploy
+
+  handlers:
+    - name: Restart Tomcat
+      service:
+        name: tomcat11
+        state: restarted
+
+
+
+
+    
+
